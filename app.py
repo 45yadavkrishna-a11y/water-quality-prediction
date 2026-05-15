@@ -1,10 +1,24 @@
 import streamlit as st
-import joblib    
+import joblib
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+import os
 
 st.set_page_config(page_title="Water Quality Prediction", page_icon="🚰", layout="wide")
+
+# Auto train if models don't exist
+if not os.path.exists('models/best_model.pkl'):
+    st.info("🔄 First time setup... Training models. Please wait 2-3 minutes...")
+    os.makedirs('models', exist_ok=True)
+    from src.preprocess import load_and_preprocess
+    from src.train import train_models
+    X_train, X_test, y_train, y_test, scaler_fit = \
+        load_and_preprocess('data/water_potability.csv')
+    joblib.dump(scaler_fit, 'models/scaler.pkl')
+    svm, rf, xgb, nn, results = train_models(X_train, X_test, y_train, y_test)
+    st.success("✅ Models trained successfully! Refreshing...")
+    st.rerun()
 
 model  = joblib.load('models/best_model.pkl')
 scaler = joblib.load('models/scaler.pkl')
